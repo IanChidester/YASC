@@ -1,20 +1,24 @@
-#include "mainwindow.h"
+#include "serverwindow.h"
 #include <QApplication>
 #include "yascserver.h"
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    MainWindow w;
+    ServerWindow w;
     w.show();
 
     YASCServer server;
-
-
+    bool connectionOpened = server.startServer();
+    if (connectionOpened) {
+        qDebug() << "connection opened";
+    }
+    else {
+        qDebug() << "connection not opened";
+    }
 
     w.setIP(server.ipAddress);
     w.setPort(server.port);
-    qDebug() << server.port;
 
     return a.exec();
 }

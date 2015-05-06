@@ -2,40 +2,42 @@
 
 YASCServer::YASCServer(QObject *parent) : QObject(parent) {
     server = new QTcpServer(this);
-
-    connect(server, SIGNAL(newConnection()), this, SLOT(newConnection()));
-
-    if(server->listen(QHostAddress::Any, port)) {
-        qDebug() << "Server started!";
-    } else {
-        qDebug() << "Server could not start.";
-    }
-
-    //set the local address
-    QTcpSocket socket;
-    socket.connectToHost("8.8.8.8", 53); // google DNS, or something else reliable
-    if (socket.waitForConnected()) {
-        qDebug()
-            << "local IPv4 address for Internet connectivity is"
-            << socket.localAddress();
-        this->ipAddress = socket.localAddress().toString();
-    } else {
-        qWarning()
-            << "could not determine local IPv4 address:"
-            << socket.errorString();
-        this->ipAddress = "127.0.0.1";
-    }
 }
 
 YASCServer::~YASCServer() {
+    server->close();
+    delete server;
+}
 
+bool YASCServer::startServer() {
+    qDebug() << "Starting server.";
+
+    connect(server, SIGNAL(newConnection()), this, SLOT(newConnection()));
+    connect(server, SIGNAL(acceptError(QAbstractSocket::SocketError)), this, SLOT(acceptError(QAbstractSocket::SocketError)));
+
+    if(server->listen(QHostAddress::Any, port) == false) {
+        qDebug() << "Server could not start.";
+        return false;
+    }
+
+    //set the local address
+//    QTcpSocket socket;
+//    socket.connectToHost("216.58.217.206", 80);
+//    if (socket.waitForConnected(5000)) {
+//        this->ipAddress = socket.localAddress().toString();
+//    } else {
+//        this->ipAddress = "127.0.0.1";
+//        qDebug() << "Couldn't find own IP";
+//        return false;
+//    }
+    qDebug() << "Server started!";
+    return true;
 }
 
 void YASCServer::newConnection() {
-    QTcpSocket* socket = server->nextPendingConnection();
+    qDebug() << "New incoming connection";
 
-    connect(socket, SIGNAL(disconnected()), this, SLOT(disconnected()));
-    connect(socket, SIGNAL(readyRead()), this, SLOT(readyRead()));
+    QTcpSocket* socket = server->nextPendingConnection();
 
     qDebug() << clients.count() << " clients.";
 
@@ -44,6 +46,10 @@ void YASCServer::newConnection() {
 
 //    socket->write("Hello client\r\n");
     socket->flush();
+
+    connect(socket, SIGNAL(disconnected()), this, SLOT(socketDisconnected()));
+    connect(socket, SIGNAL(readyRead()), this, SLOT(readyRead()));
+
 }
 
 void YASCServer::readyRead() {
@@ -64,7 +70,9 @@ void YASCServer::readyRead() {
     sendToAllBut(socket, data);
 }
 
-void YASCServer::disconnected() {
+void YASCServer::socketDisconnected() {
+    emit clientDisconnected();
+
     QTcpSocket* socket = static_cast<QTcpSocket*>(sender());
 
     qDebug() << socket->peerAddress().toString() << " closed the connection.";
@@ -91,4 +99,9 @@ void YASCServer::sendToAllBut(QTcpSocket* socket, QByteArray& data) {
     foreach(QTcpSocket* client, clients.keys())
         if (client != socket)
             client->write(message);
+}
+
+void YASCServer::acceptError(QAbstractSocket::SocketError socketError)
+{
+    qDebug()<<socketError;
 }

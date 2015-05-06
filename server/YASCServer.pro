@@ -4,23 +4,25 @@
 #
 #-------------------------------------------------
 
-QT       += core gui network
+QT       += core gui network widgets
 
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+greaterThan(QT_MAJOR_VERSION, 4):
 
 TARGET = YASCServer
 TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        mainwindow.cpp \
     yascserver.cpp \
-    simplecrypt.cpp
+    simplecrypt.cpp \
+    serverwindow.cpp
 
-HEADERS  += mainwindow.h \
+HEADERS  += \
     yascserver.h \
-    simplecrypt.h
+    simplecrypt.h \
+    serverwindow.h
 
-FORMS    += mainwindow.ui
+FORMS    += \
+    serverwindow.ui
 
 CONFIG += c++11

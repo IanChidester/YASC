@@ -19,16 +19,19 @@ private:
 
 public:
     explicit YASCServer(QObject *parent = 0);
+    bool startServer();
     ~YASCServer();
     const static quint16 port = 12345;
     QString ipAddress;
 
 signals:
+    void clientDisconnected();
 
 public slots:
     void newConnection();
     void readyRead();
-    void disconnected();
+    void socketDisconnected();
+    void acceptError(QAbstractSocket::SocketError socketError);
 };
 
 #endif // YASCSERVER_H

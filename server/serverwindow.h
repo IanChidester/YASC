@@ -4,21 +4,21 @@
 #include <QMainWindow>
 
 namespace Ui {
-class MainWindow;
+class ServerWindow;
 }
 
-class MainWindow : public QMainWindow
+class ServerWindow : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget *parent = 0);
-    ~MainWindow();
+    explicit ServerWindow(QWidget *parent = 0);
+    ~ServerWindow();
     void setIP(QString ip);
     void setPort(qint16 port);
 
 private:
-    Ui::MainWindow *ui;
+    Ui::ServerWindow *ui;
 };
 
 #endif // MAINWINDOW_H

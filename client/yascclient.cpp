@@ -7,10 +7,10 @@ YASCClient::YASCClient(QObject *parent) : QObject(parent)
 
 YASCClient::~YASCClient()
 {
-
+    socket->disconnectFromHost();
 }
 
-void YASCClient::run(QString ip, QString port, QString nickname) {
+bool YASCClient::run(QString ip, QString port, QString nickname) {
     socket = new QTcpSocket(this);
 
     connect(socket, SIGNAL(connected()), this, SLOT(connected()));
@@ -18,7 +18,7 @@ void YASCClient::run(QString ip, QString port, QString nickname) {
     connect(socket, SIGNAL(bytesWritten(qint64)), this, SLOT(bytesWritten(qint64)));
     connect(socket, SIGNAL(readyRead()), this, SLOT(readyRead()));
 
-    qDebug() << "connecting...";
+    qDebug() << "connecting from client";
 
     this->nickname = nickname;
 
@@ -26,21 +26,24 @@ void YASCClient::run(QString ip, QString port, QString nickname) {
 
     if(!socket->waitForConnected(5000)) {
         qDebug() << "Error: " << socket->errorString();
+        return false;
     }
+    return true;
 }
 
 void YASCClient::connected() {
-    qDebug() << "connected...";
+    qDebug() << "client connected";
 
     socket->write(nickname.toStdString().c_str());
+    socket->flush();
 }
 
 void YASCClient::disconnected() {
-    qDebug() << "disconnected...";
+    qDebug() << "client disconnected";
 }
 
 void YASCClient::bytesWritten(qint64 bytes) {
-    qDebug() << bytes << " bytes written...";
+    qDebug() << bytes << " bytes written from client";
 }
 
 void YASCClient::readyRead() {
@@ -48,7 +51,7 @@ void YASCClient::readyRead() {
 }
 
 void YASCClient::sendMessage(QString message) {
-    qDebug() << "sending message...";
+    qDebug() << "sending message from client";
 
     socket->write(message.toStdString().c_str());
 }

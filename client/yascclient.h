@@ -17,7 +17,7 @@ private:
 public:
     explicit YASCClient(QObject *parent = 0);
     ~YASCClient();
-    void run(QString ip, QString port, QString nickname);
+    bool run(QString ip, QString port, QString nickname);
     QString getNickname();
     //void setNickname(); dont think we need this
 
