@@ -2,7 +2,7 @@
 
 YASCClient::YASCClient(QObject *parent) : QObject(parent)
 {
-
+    crypto.setKey(0xf792525d4e470448); //set the encryptoin key
 }
 
 YASCClient::~YASCClient()
@@ -32,28 +32,31 @@ bool YASCClient::run(QString ip, QString port, QString nickname) {
 }
 
 void YASCClient::connected() {
-    qDebug() << "client connected";
+    qDebug() << "connected...";
 
-    socket->write(nickname.toStdString().c_str());
-    socket->flush();
+    QByteArray nick = crypto.encryptToByteArray(nickname);
+    socket->write(nick);
 }
 
 void YASCClient::disconnected() {
-    qDebug() << "client disconnected";
+    qDebug() << "disconnected...";
 }
 
 void YASCClient::bytesWritten(qint64 bytes) {
-    qDebug() << bytes << " bytes written from client";
+    qDebug() << bytes << " bytes written...";
 }
 
 void YASCClient::readyRead() {
-    emit incomingMessage(socket->readAll());
+    QByteArray message = crypto.decryptToByteArray(socket->readAll());
+    emit incomingMessage(QString(message));
+    qDebug() << QString(message);
 }
 
 void YASCClient::sendMessage(QString message) {
-    qDebug() << "sending message from client";
+    qDebug() << "sending message...";
 
-    socket->write(message.toStdString().c_str());
+    QByteArray msgToSend = crypto.encryptToByteArray(message);
+    socket->write(msgToSend);
 }
 
 QString YASCClient::getNickname() {

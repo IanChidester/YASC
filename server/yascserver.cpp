@@ -2,6 +2,7 @@
 
 YASCServer::YASCServer(QObject *parent) : QObject(parent) {
     server = new QTcpServer(this);
+    crypto.setKey(0xf792525d4e470448); //set the shared encryption key
 }
 
 YASCServer::~YASCServer() {
@@ -20,16 +21,6 @@ bool YASCServer::startServer() {
         return false;
     }
 
-    //set the local address
-//    QTcpSocket socket;
-//    socket.connectToHost("216.58.217.206", 80);
-//    if (socket.waitForConnected(5000)) {
-//        this->ipAddress = socket.localAddress().toString();
-//    } else {
-//        this->ipAddress = "127.0.0.1";
-//        qDebug() << "Couldn't find own IP";
-//        return false;
-//    }
     qDebug() << "Server started!";
     return true;
 }
@@ -41,10 +32,10 @@ void YASCServer::newConnection() {
 
     qDebug() << clients.count() << " clients.";
 
-    QString motd = "MOTD\n" + QString::number(clients.count()) + " clients connected.";
-    socket->write(motd.toStdString().c_str());
+    QString strMotd = "MOTD\n" + QString::number(clients.count()) + " clients connected."; //set the motd
+    QByteArray motd = crypto.encryptToByteArray(strMotd); //encrypt the str
+    socket->write(motd);
 
-//    socket->write("Hello client\r\n");
     socket->flush();
 
     connect(socket, SIGNAL(disconnected()), this, SLOT(socketDisconnected()));
@@ -56,18 +47,19 @@ void YASCServer::readyRead() {
     QTcpSocket* socket = static_cast<QTcpSocket*>(sender());
 
     auto data = socket->readAll();
+    QByteArray dataDecrypted = crypto.decryptToByteArray(data);
 
     qDebug() << "incomming data from: " << socket->peerAddress().toString();
-    qDebug() << data;
+    qDebug() << dataDecrypted;
 
     if (!clients.contains(socket)) {
         //new user
-        auto username = data.left(10);
+        auto username = dataDecrypted.left(10);
         clients[socket] = username;
-        data = " has connected.";
+        dataDecrypted = " has connected.";
     }
 
-    sendToAllBut(socket, data);
+    sendToAllBut(socket, dataDecrypted);
 }
 
 void YASCServer::socketDisconnected() {
@@ -77,9 +69,10 @@ void YASCServer::socketDisconnected() {
 
     qDebug() << socket->peerAddress().toString() << " closed the connection.";
 
+    auto username = clients.value(socket);
     if (clients.remove(socket) > 0) {
         QByteArray data;
-        data.append(" has disconnected.");
+        data = data.append(username).append(" has disconnected.");
 
         sendToAllBut(socket, data);
     }
@@ -95,7 +88,7 @@ void YASCServer::sendToAllBut(QTcpSocket* socket, QByteArray& data) {
     }
 
     QByteArray message = QByteArray().append(name).append(": ").append(data);
-
+    message = crypto.encryptToByteArray(message);
     foreach(QTcpSocket* client, clients.keys())
         if (client != socket)
             client->write(message);

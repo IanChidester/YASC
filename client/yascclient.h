@@ -6,6 +6,7 @@
 #include <QAbstractSocket>
 #include <QDebug>
 #include <QHostAddress>
+#include "simplecrypt.h"
 
 class YASCClient : public QObject
 {
@@ -13,6 +14,7 @@ class YASCClient : public QObject
 private:
     QTcpSocket* socket;
     QString nickname;
+    SimpleCrypt crypto;
 
 public:
     explicit YASCClient(QObject *parent = 0);

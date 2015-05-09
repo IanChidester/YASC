@@ -7,6 +7,7 @@
 #include <QMap>
 #include <QDebug>
 #include <QList>
+#include "simplecrypt.h"
 
 class YASCServer : public QObject
 {
@@ -16,6 +17,7 @@ private:
     QTcpServer *server;
     QMap<QTcpSocket*, QString> clients;
     void sendToAllBut(QTcpSocket*, QByteArray&);
+    SimpleCrypt crypto;
 
 public:
     explicit YASCServer(QObject *parent = 0);
