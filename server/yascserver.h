@@ -15,7 +15,9 @@ class YASCServer : public QObject
 
 private:
     QTcpServer *server;
+    QTcpServer *audioServer;
     QMap<QTcpSocket*, QString> clients;
+    QList<QTcpSocket*> audioClients;
     void sendToAllBut(QTcpSocket*, QByteArray&);
     SimpleCrypt crypto;
 
@@ -24,12 +26,17 @@ public:
     bool startServer();
     ~YASCServer();
     const static quint16 port = 12345;
+    const static quint16 audioPort = 12346;
     QString ipAddress;
 
 signals:
     void clientDisconnected();
+    void serverReady();
 
 public slots:
+    void newAudioConnection();
+    void audioReadyRead();
+    void audioDisconnection();
     void newConnection();
     void readyRead();
     void socketDisconnected();

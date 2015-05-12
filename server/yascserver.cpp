@@ -2,12 +2,16 @@
 
 YASCServer::YASCServer(QObject *parent) : QObject(parent) {
     server = new QTcpServer(this);
+    audioServer = new QTcpServer(this);
     crypto.setKey(0xf792525d4e470448); //set the shared encryption key
 }
 
 YASCServer::~YASCServer() {
     server->close();
     delete server;
+
+    audioServer->close();
+    delete audioServer;
 }
 
 bool YASCServer::startServer() {
@@ -21,7 +25,20 @@ bool YASCServer::startServer() {
         return false;
     }
 
-    qDebug() << "Server started!";
+    qDebug() << "Starting audio server.";
+
+    if(audioServer->listen(QHostAddress::Any, audioPort) == false) {
+        qDebug() << "Audio server could not start.";
+        // return false;
+    }
+
+    connect(audioServer, SIGNAL(newConnection()), this, SLOT(newAudioConnection()));
+
+
+    qDebug() << "Servers started!";
+
+    emit serverReady();
+
     return true;
 }
 
@@ -97,4 +114,47 @@ void YASCServer::sendToAllBut(QTcpSocket* socket, QByteArray& data) {
 void YASCServer::acceptError(QAbstractSocket::SocketError socketError)
 {
     qDebug()<<socketError;
+}
+
+void YASCServer::newAudioConnection() {
+    qDebug() << "New incoming audio connection";
+
+    QTcpSocket *socket = audioServer->nextPendingConnection();
+
+    audioClients.append(socket);
+
+    qDebug() << audioClients.count() << " clients.";
+
+    connect(socket, SIGNAL(disconnected()), this, SLOT(audioDisconnection()));
+    connect(socket, SIGNAL(readyRead()), this, SLOT(audioReadyRead()));
+}
+
+void YASCServer::audioReadyRead() {
+    QTcpSocket* socket = static_cast<QTcpSocket*>(sender());
+
+    auto data = socket->readAll();
+
+    if (!data.isNull())
+        return;
+
+    qDebug() << "incomming audio data from: " << socket->peerAddress().toString();
+
+    foreach(QTcpSocket* client, audioClients)
+        if(client != socket)
+            client->write(data);
+}
+
+void YASCServer::audioDisconnection() {
+    QTcpSocket* socket = static_cast<QTcpSocket*>(sender());
+
+    qDebug() << socket->peerAddress().toString() << " closed the audio connection.";
+
+    if (audioClients.removeOne(socket) > 0) {
+        QByteArray data;
+        data.append(socket->peerAddress().toString() + " has disconnected audio.");
+
+        sendToAllBut(socket, data);
+    }
+
+    qDebug() << audioClients.count() << " audio clients.";
 }
