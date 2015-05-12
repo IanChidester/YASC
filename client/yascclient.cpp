@@ -1,6 +1,9 @@
 #include "yascclient.h"
+#include <QTime>
+#include <QCoreApplication>
 
-YASCClient::YASCClient(QObject *parent) : QObject(parent)
+YASCClient::YASCClient(QObject *parent) :
+    QObject(parent), adThread(&YASCClient::adThreadRun, this)
 {
     crypto.setKey(0xf792525d4e470448); //set the encryptoin key
 }
@@ -8,6 +11,20 @@ YASCClient::YASCClient(QObject *parent) : QObject(parent)
 YASCClient::~YASCClient()
 {
     socket->disconnectFromHost();
+}
+
+void YASCClient::adThreadRun()
+{
+    while (true)
+    {
+        QTime dieTime= QTime::currentTime().addSecs(10);
+        while( QTime::currentTime() < dieTime )
+        {
+            QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
+        }
+
+        emit incomingMessage("Support free software! Use the GPLv3");
+    }
 }
 
 bool YASCClient::run(QString ip, QString port, QString nickname) {

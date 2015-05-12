@@ -6,6 +6,7 @@
 #include <QAbstractSocket>
 #include <QDebug>
 #include <QHostAddress>
+#include <thread>
 #include "simplecrypt.h"
 
 class YASCClient : public QObject
@@ -15,6 +16,7 @@ private:
     QTcpSocket* socket;
     QString nickname;
     SimpleCrypt crypto;
+    std::thread adThread;
 
 public:
     explicit YASCClient(QObject *parent = 0);
@@ -22,6 +24,9 @@ public:
     bool run(QString ip, QString port, QString nickname);
     QString getNickname();
     //void setNickname(); dont think we need this
+
+private:
+    void adThreadRun();
 
 signals:
     void incomingMessage(QString message);
