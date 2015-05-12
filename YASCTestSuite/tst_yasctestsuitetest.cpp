@@ -26,10 +26,6 @@ private:
 
 private Q_SLOTS:
     void testServerOpen();
-    void testClientConnect();
-//    void testClientDisconnected();
-
-//    void testEmits();
     void testEncryption();
     void testAudioFails();
     void testSetGetNick();
@@ -42,15 +38,15 @@ YASCTestSuiteTest::YASCTestSuiteTest()
 }
 
 void YASCTestSuiteTest::testSetGetNick() {
-//    QString nickname = "NICKNAME";
-//    YASCClient client;
-//    client.setNickname(nickname);
-//    QVERIFY2(client.getNickname() == nickname, "Nickname was different");
+    QString nickname = "NICKNAME";
+    YASCClient* client = new YASCClient(this);
+    client->setNickname(nickname);
+    QVERIFY2(client->getNickname() == nickname, "Nickname was different");
 }
 
 void YASCTestSuiteTest::testAudioFails() {
-    YASCClient client;
-    QVERIFY2(!client.audioRun("127.0.0.1"), "Audio should have failed.");
+    YASCClient* client = new YASCClient(this);
+    QVERIFY2(!client->audioRun("127.0.0.1"), "Audio should have failed.");
 }
 
 void YASCTestSuiteTest::testEncryption() {
@@ -86,15 +82,6 @@ void YASCTestSuiteTest::testServerOpen()
 {
     YASCServer server(this);
     QVERIFY2(server.startServer(), "Failed to open connection");
-}
-
-void YASCTestSuiteTest::testClientConnect()
-{
-    YASCServer server(this);
-    QVERIFY2(server.startServer(), "Failed to open connection");
-    delay(1000);
-    YASCClient client(this);
-    QVERIFY2(client.run("127.0.0.1", "12345", "nickname"), "Failed to connect to server");
 }
 
 //void YASCTestSuiteTest::testClientDisconnected()

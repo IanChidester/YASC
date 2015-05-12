@@ -3,14 +3,19 @@
 #include <QCoreApplication>
 
 YASCClient::YASCClient(QObject *parent) :
-    QObject(parent), adThread(&YASCClient::adThreadRun, this)
+    QObject(parent), socket(NULL), adThread(&YASCClient::adThreadRun, this)
 {
     crypto.setKey(0xf792525d4e470448); //set the encryptoin key
 }
 
 YASCClient::~YASCClient()
 {
-    socket->disconnectFromHost();
+    if (socket)
+    {
+        socket->disconnectFromHost();
+        delete socket;
+        socket = NULL;
+    }
 }
 
 void YASCClient::adThreadRun()
@@ -22,7 +27,6 @@ void YASCClient::adThreadRun()
         {
             QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
         }
-
         emit incomingMessage("Support free software! Use the GPLv3");
     }
 }
@@ -87,11 +91,11 @@ void YASCClient::setNickname(QString nick) {
 bool YASCClient::audioRun(QString ip, QString port) {
     return false;
     // i need to set up reciving audio before connecting, then set up sending audio after connecting.
-    if (setupAudioSocket(ip, port)) {
-        setupAudioInputOutput();
-        return true;
-    }
-    return false;
+//    if (setupAudioSocket(ip, port)) {
+//        setupAudioInputOutput();
+//        return true;
+//    }
+//    return false;
 }
 
 bool YASCClient::setupAudioSocket(QString ip, QString port) {
