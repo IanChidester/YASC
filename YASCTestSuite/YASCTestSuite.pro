@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += gui network widgets testlib
+QT       += gui network widgets testlib multimedia
 
 TARGET = tst_yasctestsuitetest
 CONFIG   += console

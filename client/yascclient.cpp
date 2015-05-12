@@ -63,6 +63,10 @@ QString YASCClient::getNickname() {
     return this->nickname;
 }
 
+void YASCClient::setNickname(QString nick) {
+    this->nickname = nick;
+}
+
 bool YASCClient::audioRun(QString ip, QString port) {
     return false;
     // i need to set up reciving audio before connecting, then set up sending audio after connecting.

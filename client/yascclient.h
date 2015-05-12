@@ -50,7 +50,7 @@ public:
     bool run(QString ip, QString port, QString nickname);
     bool audioRun(QString ip, QString port = "12346");
     QString getNickname();
-    //void setNickname(); dont think we need this
+    void setNickname(QString nick);
 
 signals:
     void incomingMessage(QString message);

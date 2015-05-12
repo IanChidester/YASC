@@ -31,6 +31,7 @@ public:
 
 signals:
     void clientDisconnected();
+    void serverReady();
 
 public slots:
     void newAudioConnection();

@@ -36,6 +36,9 @@ bool YASCServer::startServer() {
 
 
     qDebug() << "Servers started!";
+
+    emit serverReady();
+
     return true;
 }
 
