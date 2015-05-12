@@ -27,15 +27,15 @@ bool YASCServer::startServer() {
 
     qDebug() << "Starting audio server.";
 
-    connect(audioServer, SIGNAL(newConnection()), this, SLOT(newAudioConnection()));
-
     if(audioServer->listen(QHostAddress::Any, audioPort) == false) {
         qDebug() << "Audio server could not start.";
         // return false;
     }
 
+    connect(audioServer, SIGNAL(newConnection()), this, SLOT(newAudioConnection()));
 
-    qDebug() << "Server started!";
+
+    qDebug() << "Servers started!";
     return true;
 }
 
@@ -131,6 +131,9 @@ void YASCServer::audioReadyRead() {
 
     auto data = socket->readAll();
 
+    if (!data.isNull())
+        return;
+
     qDebug() << "incomming audio data from: " << socket->peerAddress().toString();
 
     foreach(QTcpSocket* client, audioClients)
@@ -145,7 +148,7 @@ void YASCServer::audioDisconnection() {
 
     if (audioClients.removeOne(socket) > 0) {
         QByteArray data;
-        data.append(" has disconnected audio.");
+        data.append(socket->peerAddress().toString() + " has disconnected audio.");
 
         sendToAllBut(socket, data);
     }

@@ -64,8 +64,13 @@ QString YASCClient::getNickname() {
 }
 
 bool YASCClient::audioRun(QString ip, QString port) {
-    setupAudioInputOutput();
-    return setupAudioSocket(ip, port);
+    return false;
+    // i need to set up reciving audio before connecting, then set up sending audio after connecting.
+    if (setupAudioSocket(ip, port)) {
+        setupAudioInputOutput();
+        return true;
+    }
+    return false;
 }
 
 bool YASCClient::setupAudioSocket(QString ip, QString port) {
@@ -76,7 +81,7 @@ bool YASCClient::setupAudioSocket(QString ip, QString port) {
     audioSocket->connectToHost(QHostAddress(ip), port.toInt());
 
     if(!audioSocket->waitForConnected(5000)) {
-        qDebug() << "Error: " << audioSocket->errorString();
+        qDebug() << "Audio Socket Error: " << audioSocket->errorString();
         return false;
     }
     return true;
@@ -86,28 +91,28 @@ void YASCClient::setupAudioInputOutput() {
     m_device = QAudioDeviceInfo::defaultInputDevice();
     m_buffer = QByteArray(BufferSize, 0);
 
-    m_audioInput = new QAudioInput(m_device, getFormat()); // Pete: Need this, but can call w/o format.
+    m_audioInput = new QAudioInput(m_device, getFormat());
     m_audioOutput = new QAudioOutput(m_device, getFormat());
 
-    m_input = m_audioInput->start(); // Pete: Use this one for our program
+    m_input = m_audioInput->start();
     m_input->open(QIODevice::ReadWrite);
-    connect(m_input, SIGNAL(readyRead()), this, SLOT(audioReadMore())); // Pete: We'll use the signals and slots method.
+    connect(m_input, SIGNAL(readyRead()), this, SLOT(audioReadMore()));
 
     m_output = m_audioOutput->start();
 }
 
 void YASCClient::audioReadMore() {
     qDebug() << "readMore()";
-    if (!m_audioInput)
+    if (!(m_audioInput && m_input))
         return;
-    qint64 len = m_audioInput->bytesReady(); // Pete: On the server will we need to change the read to make sure we got all the data?
+    qint64 len = m_audioInput->bytesReady();
     if (len > BufferSize)
         len = BufferSize;
-    qint64 l = m_input->read(m_buffer.data(), len); // Pete: m_buffer is the QByteArray we will just pipe over the network.
+    qint64 l = m_input->read(m_buffer.data(), len);
     if (l > 0) {
         qDebug() << " Got " << l << " data for writing";
 
-        //m_audioInfo->write(m_buffer.constData(), l); // Pete: this is where we send the data out our network mechanism.
+        //m_audioInfo->write(m_buffer.constData(), l);
 
         //m_output->write(m_buffer.constData(), l);
 
@@ -120,13 +125,14 @@ void YASCClient::audioReadMore() {
 void YASCClient::incommingAudioReadyRead() {
     auto audioBuffer = audioSocket->readAll();
 
-    m_output->write(audioBuffer);
+    if (m_output)
+        m_output->write(audioBuffer, audioSocket->bytesToWrite());
 }
 
 QAudioFormat YASCClient::getFormat() {
     QAudioFormat m_format;
 
-    m_format.setSampleRate(8000); //Pete: We might need this if defaults suck.
+    m_format.setSampleRate(8000);
     m_format.setChannelCount(1);
     m_format.setSampleSize(16);
     m_format.setSampleType(QAudioFormat::SignedInt);
